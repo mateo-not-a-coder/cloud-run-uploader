@@ -28,11 +28,18 @@ app.post('/upload', async (req, res) => {
     });
     const drive = google.drive({ version: 'v3', auth });
 
-    // Download the file from Google Drive as a stream.
-    const driveResponse = await drive.files.get(
-      { fileId, alt: 'media' },
-      { responseType: 'stream' }
-    );
+    // Attempt to download the file from Google Drive as a stream.
+    let driveResponse;
+    try {
+      driveResponse = await drive.files.get(
+        { fileId, alt: 'media' },
+        { responseType: 'stream' }
+      );
+      console.log("Drive file download started successfully.");
+    } catch (driveError) {
+      console.error("Error downloading file from Drive:", driveError);
+      return res.status(500).json({ error: 'Failed to download file from Drive', details: driveError.message });
+    }
 
     // Prepare destination details for GCS.
     const destination = `${GCS_FOLDER}/${fileName}`;
@@ -57,8 +64,8 @@ app.post('/upload', async (req, res) => {
         return res.status(500).json({ error: 'Failed to upload file to GCS', details: err.message });
       })
       .on('finish', async () => {
-        // Make the uploaded file public.
-        await gcsFile.makePublic();
+        // With Uniform Bucket-Level Access enabled, public access is granted at the bucket level.
+        // Therefore, we do not call gcsFile.makePublic() here.
         const publicUrl = `https://storage.googleapis.com/${GCS_BUCKET}/${destination}`;
         console.log(`File uploaded successfully to ${publicUrl}`);
         res.json({ status: 'success', publicUrl });
