@@ -2,7 +2,7 @@
   "name": "cloud-run-uploader",
   "version": "1.0.0",
   "description": "Cloud Run service for uploading Drive files to GCS",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node server.js"
   },
